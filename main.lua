@@ -25,23 +25,20 @@ Game = {
   rows = GRID_SIZE,
   cols = GRID_SIZE,
   cells = {},
-  state = "start",
   score = 0,
   empty_count = 0
 }
 
-MoveTable = {}
-KeyPress  = {}
+MoveTable = { }
+KeyPress = { }
 gfx = love.graphics
 
--- reset board: only rows, cells are nil by default
+-- reset board to empty state
 function game_clear()
   Game.empty_count = Game.rows * Game.cols
-  Game.cells = {}
-  Row = 1
-  while Row <= Game.rows do
-    Game.cells[Row] = {}
-    Row = Row + 1
+  Game.cells = { }
+  for row = 1, Game.rows do
+    Game.cells[row] = { }
   end
 end
 
@@ -54,19 +51,18 @@ function tile_random_value()
 end
 
 -- find N-th empty cell (by scan order)
-function find_empty_by_index(Target)
-  Seen = 0
-  Row = 1
-  while Row <= Game.rows do
-    Col = 1
-    while Col <= Game.cols do
-      if Game.cells[Row][Col] == nil then
-        Seen = Seen + 1
-        if Seen == Target then return Row, Col
+function find_empty_by_index(target)
+  seen = 0
+  for row = 1, Game.rows do
+    for col = 1, Game.cols do
+      if Game.cells[row][col] == nil then
+        seen = seen + 1
+        if seen == target then
+          return row, col
         end
       end
-      Col = Col + 1 end
-    Row = Row + 1 end
+    end
+  end
 end
 
 -- add one random 2 or 4
@@ -74,10 +70,10 @@ function game_add_random_tile()
   if Game.empty_count == 0 then
     return
   end
-  Target = love.math.random(Game.empty_count)
-  Row, Col = find_empty_by_index(Target)
-  if Row ~= nil then
-    Game.cells[Row][Col] = tile_random_value()
+  target = love.math.random(Game.empty_count)
+  row, col = find_empty_by_index(target)
+  if row then
+    Game.cells[row][col] = tile_random_value()
     Game.empty_count = Game.empty_count - 1
   end
 end
@@ -91,292 +87,161 @@ function game_reset()
   Game.state = "play"
 end
 
--- slide row left by one pass
-function slide_row_left_once(RowIndex)
-  Moved = false; 
-  Col = 1
-  while Col < Game.cols do
-    A = Game.cells[RowIndex][Col]
-    B = Game.cells[RowIndex][Col + 1]
-    if A == nil and B ~= nil then
-      Game.cells[RowIndex][Col] = B
-      Game.cells[RowIndex][Col + 1] = nil
-      Moved = true end
-    Col = Col + 1 end
-  return Moved
-end
-
--- merge neighbours in row to the left
-function merge_row_left(RowIndex)
-  Moved = false; 
-  Col = 1
-  while Col < Game.cols do
-    A = Game.cells[RowIndex][Col]
-    if A ~= nil and Game.cells[RowIndex][Col + 1] == A then
-      Value = A * 2; 
-      Game.cells[RowIndex][Col] = Value
-      Game.cells[RowIndex][Col + 1] = nil; 
-      Moved = true
-      Game.score = Game.score + Value;
-      Game.empty_count = Game.empty_count + 1 end
-    Col = Col + 1 end
-  return Moved
-end
-
--- one full left move for a row
-function move_row_left(RowIndex)
-  Any = false
-  if slide_row_left_once(RowIndex) then Any = true end
-  if slide_row_left_once(RowIndex) then Any = true end
-  if slide_row_left_once(RowIndex) then Any = true end
-  if merge_row_left(RowIndex) then Any = true end
-  if slide_row_left_once(RowIndex) then Any = true end
-  return Any
-end
-
--- slide row right by one pass
-function slide_row_right_once(RowIndex)
-  Moved = false; 
-  Col = Game.cols
-  while Col > 1 do
-    A = Game.cells[RowIndex][Col]
-    B = Game.cells[RowIndex][Col - 1]
-    if A == nil and B ~= nil then
-      Game.cells[RowIndex][Col] = B
-      Game.cells[RowIndex][Col - 1] = nil
-      Moved = true
+-- compact line in-place via accessors
+function compact_line(get_value, set_value, size)
+  local moved = false
+  local write = 1
+  for index = 1, size do
+    local value = get_value(index)
+    if value ~= nil then
+      if index ~= write then moved = true end
+      set_value(write, value); 
+      write = write + 1
     end
-    Col = Col - 1 end
-  return Moved
-end
-
--- merge neighbours in row to the right
-function merge_row_right(RowIndex)
-  Moved = false; 
-  Col = Game.cols
-  while Col > 1 do
-    A = Game.cells[RowIndex][Col]
-    if A ~= nil and Game.cells[RowIndex][Col - 1] == A then
-      Value = A * 2; 
-      Game.cells[RowIndex][Col] = Value
-      Game.cells[RowIndex][Col - 1] = nil; 
-      Moved = true
-      Game.score = Game.score + Value;
-      Game.empty_count = Game.empty_count + 1 end
-    Col = Col - 1 end
-  return Moved
-end
-
--- one full right move for a row
-function move_row_right(RowIndex)
-  Any = false
-  if slide_row_right_once(RowIndex) then 
-    Any = true end
-  if slide_row_right_once(RowIndex) then 
-    Any = true end
-  if slide_row_right_once(RowIndex) then 
-    Any = true end
-  if merge_row_right(RowIndex) then 
-    Any = true end
-  if slide_row_right_once(RowIndex) then 
-    Any = true end
-  return Any
-end
-
--- slide column up by one pass
-function slide_col_up_once(ColIndex)
-  Moved = false; 
-  Row = 1
-  while Row < Game.rows do
-    A = Game.cells[Row][ColIndex]
-    B = Game.cells[Row + 1][ColIndex]
-    if A == nil and B ~= nil then
-      Game.cells[Row][ColIndex] = B
-      Game.cells[Row + 1][ColIndex] = nil
-      Moved = true
-    end
-    Row = Row + 1
   end
-  return Moved
+  for index = write, size do 
+    set_value(index, nil) end
+  return moved
 end
 
--- merge neighbours in column up
-function merge_col_up(ColIndex)
-  Moved = false; Row = 1
-  while Row < Game.rows do
-    A = Game.cells[Row][ColIndex]
-    if A ~= nil and Game.cells[Row + 1][ColIndex] == A then
-      Value = A * 2; Game.cells[Row][ColIndex] = Value
-      Game.cells[Row + 1][ColIndex] = nil; Moved = true
-      Game.score = Game.score + Value;
+-- merge equal neighbours in-place, update score/empty_count
+function merge_line(get_value, set_value, size)
+  local moved = false
+  for index = 1, size - 1 do
+    local value = get_value(index)
+    if value ~= nil and get_value(index + 1) == value then
+      local merged = value + value
+      set_value(index, merged); set_value(index + 1, nil)
+      Game.score = Game.score + merged
       Game.empty_count = Game.empty_count + 1
+      moved = true
     end
-    Row = Row + 1
   end
-  return Moved
+  return moved
 end
 
--- one full up move for a column
-function move_col_up(ColIndex)
-  Any = false
-  if slide_col_up_once(ColIndex) then 
-    Any = true end
-  if slide_col_up_once(ColIndex) then 
-    Any = true end
-  if slide_col_up_once(ColIndex) then 
-    Any = true end
-  if merge_col_up(ColIndex) then 
-    Any = true end
-  if slide_col_up_once(ColIndex) then 
-    Any = true end
-  return Any
+-- full move on abstract line via accessors
+function line_move(get_value, set_value, size)
+  local moved = compact_line(get_value, set_value, size)
+  if merge_line(get_value, set_value, size) 
+  then moved = true end
+  if compact_line(get_value, set_value, size) 
+  then moved = true end
+  return moved
 end
 
--- slide column down by one pass
-function slide_col_down_once(ColIndex)
-  Moved = false; Row = Game.rows
-  while Row > 1 do
-    A = Game.cells[Row][ColIndex]
-    B = Game.cells[Row - 1][ColIndex]
-    if A == nil and B ~= nil then
-      Game.cells[Row][ColIndex] = B
-      Game.cells[Row - 1][ColIndex] = nil
-      Moved = true
+-- apply left move to one row
+function line_apply_row_left(row)
+  local function get_value(index)
+    return Game.cells[row][index]
+  end
+  local function set_value(index, value)
+    Game.cells[row][index] = value
+  end
+  return line_move(get_value, set_value, Game.cols)
+end
+
+-- apply right move to one row
+function line_apply_row_right(row)
+  local function get_value(index)
+    local col = Game.cols - index + 1
+    return Game.cells[row][col]
+  end
+  local function set_value(index, value)
+    local col = Game.cols - index + 1
+    Game.cells[row][col] = value
+  end
+  return line_move(get_value, set_value, Game.cols)
+end
+
+-- apply up move to one column
+function line_apply_col_up(col)
+  local function get_value(index)
+    return Game.cells[index][col]
+  end
+  local function set_value(index, value)
+    Game.cells[index][col] = value
+  end
+  return line_move(get_value, set_value, Game.rows)
+end
+
+-- apply down move to one column
+function line_apply_col_down(col)
+  local function get_value(index)
+    local row = Game.rows - index + 1
+    return Game.cells[row][col]
+  end
+  local function set_value(index, value)
+    local row = Game.rows - index + 1
+    Game.cells[row][col] = value
+  end
+  return line_move(get_value, set_value, Game.rows)
+end
+
+-- move the whole board
+function move_board(line_apply, lines)
+  moved = false
+  for index = 1, lines do
+    if line_apply(index) then
+      moved = true
     end
-    Row = Row - 1
   end
-  return Moved
+  return moved
 end
 
--- merge neighbours in column down
-function merge_col_down(ColIndex)
-  Moved = false; 
-  Row = Game.rows
-  while Row > 1 do
-    A = Game.cells[Row][ColIndex]
-    if A ~= nil and Game.cells[Row - 1][ColIndex] == A then
-      Value = A * 2; 
-      Game.cells[Row][ColIndex] = Value
-      Game.cells[Row - 1][ColIndex] = nil; 
-      Moved = true
-      Game.score = Game.score + Value;
-      Game.empty_count = Game.empty_count + 1 end
-    Row = Row - 1 end
-  return Moved
+-- move left on whole board
+function MoveTable.left()
+  return move_board(line_apply_row_left, Game.rows)
 end
 
--- one full down move for a column
-function move_col_down(ColIndex)
-  Any = false
-  if slide_col_down_once(ColIndex) then 
-    Any = true end
-  if slide_col_down_once(ColIndex) then 
-    Any = true end
-  if slide_col_down_once(ColIndex) then 
-    Any = true end
-  if merge_col_down(ColIndex) then 
-    Any = true end
-  if slide_col_down_once(ColIndex) then 
-    Any = true end
-  return Any
+-- move right on whole board
+function MoveTable.right()
+  return move_board(line_apply_row_right, Game.rows)
 end
 
--- move the whole board in one direction
-function game_move_left()
-  Moved = false; Row = 1
-  while Row <= Game.rows do
-    if move_row_left(Row) then Moved = true end
-    Row = Row + 1
-  end
-  return Moved
+-- move up on whole board
+function MoveTable.up()
+  return move_board(line_apply_col_up, Game.cols)
 end
 
-function game_move_right()
-  Moved = false; Row = 1
-  while Row <= Game.rows do
-    if move_row_right(Row) then Moved = true end
-    Row = Row + 1
-  end
-  return Moved
+-- move down on whole board
+function MoveTable.down()
+  return move_board(line_apply_col_down, Game.cols)
 end
 
-function game_move_up()
-  Moved = false; Col = 1
-  while Col <= Game.cols do
-    if move_col_up(Col) then Moved = true end
-    Col = Col + 1
-  end
-  return Moved
-end
-
-function game_move_down()
-  Moved = false; Col = 1
-  while Col <= Game.cols do
-    if move_col_down(Col) then Moved = true end
-    Col = Col + 1
-  end
-  return Moved
-end
-
-MoveTable.left  = game_move_left
-MoveTable.right = game_move_right
-MoveTable.up    = game_move_up
-MoveTable.down  = game_move_down
-
--- empty cell check
+-- check for empty cell
 function game_has_empty()
   return Game.empty_count > 0
 end
 
--- neighbour merge check for a single cell
-function can_merge_neighbours(Row, Col)
-  Value = Game.cells[Row][Col]
-  if Value == nil then
-    return false
-  end
-  if Col < Game.cols and Game.cells[Row][Col + 1] == Value then
-    return true
-  end
-  if Row < Game.rows and Game.cells[Row + 1][Col] == Value then
-    return true
-  end
-  return false
-end
-
 -- true if at least one merge is possible
 function game_can_merge()
-  Row = 1
-  while Row <= Game.rows do
-    Col = 1
-    while Col <= Game.cols do
-      if can_merge_neighbours(Row, Col) then
+  for row = 1, Game.rows do
+    for col = 1, Game.cols do
+      if Game.cells[row][col] and 
+         ((col < Game.cols and 
+         Game.cells[row][col] == Game.cells[row][col + 1])
+          or (row < Game.rows and 
+          Game.cells[row][col] == Game.cells[row + 1][col])) then
         return true
       end
-      Col = Col + 1
     end
-    Row = Row + 1
   end
   return false
 end
 
 -- true when no moves left
 function game_is_over()
-  if game_has_empty() then
-    return false
-  end
-  if game_can_merge() then
-    return false
-  end
-  return true
+  return not (game_has_empty() or game_can_merge())
 end
 
 -- run one move in a given direction
-function game_handle_move(Dir)
-  MoveFunc = MoveTable[Dir]
-  if not MoveFunc then
+function game_handle_move(dir)
+  move_func = MoveTable[dir]
+  if not move_func then
     return
   end
-  if MoveFunc() then
+  if move_func() then
     game_add_random_tile()
     if game_is_over() then
       Game.state = "gameover"
@@ -397,32 +262,28 @@ function draw_board_frame()
 end
 
 -- draw a single tile
-function draw_cell(Row, Col, Value)
-  X = BOARD_LEFT + (Col - 1) * CELL_SIZE
-  Y = BOARD_TOP  + (Row - 1) * CELL_SIZE
-  Size = CELL_SIZE - CELL_GAP
-  if Value ~= nil then
+function draw_cell(row, col, value)
+  x = BOARD_LEFT + (col - 1) * CELL_SIZE
+  y = BOARD_TOP  + (row - 1) * CELL_SIZE
+  size = CELL_SIZE - CELL_GAP
+  if value ~= nil then
     gfx.setColor(COLOR_TILE_BG)
   else
     gfx.setColor(COLOR_EMPTY)
   end
-  gfx.rectangle("fill", X, Y, Size, Size)
-  if Value ~= nil then
+  gfx.rectangle("fill", x, y, size, size)
+  if value ~= nil then
     gfx.setColor(COLOR_TILE_FG)
-    gfx.print(Value, X + 10, Y + 10)
+    gfx.print(value, x + 10, y + 10)
   end
 end
 
 -- draw whole board
 function draw_board()
-  Row = 1
-  while Row <= Game.rows do
-    Col = 1
-    while Col <= Game.cols do
-      draw_cell(Row, Col, Game.cells[Row][Col])
-      Col = Col + 1
+  for row = 1, Game.rows do
+    for col = 1, Game.cols do
+      draw_cell(row, col, Game.cells[row][col])
     end
-    Row = Row + 1
   end
 end
 
@@ -463,10 +324,10 @@ function KeyPress.r()
 end
 
 -- keyboard input
-function love.keypressed(Key)
-  Handler = KeyPress[Key]
-  if Handler then
-    Handler()
+function love.keypressed(key)
+  handler = KeyPress[key]
+  if handler then
+    handler()
   end
 end
 
