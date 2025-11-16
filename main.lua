@@ -206,15 +206,16 @@ function MoveTable.down()
   return move_board(line_apply_col_down, Game.cols)
 end
 
--- true if at least one merge is possible
+-- true if at least one merge is possible on a full board
 function game_can_merge()
-  local cells = Game.cells
-  for row = 1, Game.rows do
-    for col = 1, Game.cols do
-      if cells[row][col] and ((col < Game.cols
-           and cells[row][col] == cells[row][col + 1]) or (row
-           < Game.rows
-           and cells[row][col] == cells[row + 1][col]))
+  local cells, rows, cols = Game.cells, Game.rows, Game.cols
+  for row = 1, rows do
+    for col = 1, cols do
+      if (col < cols) and (cells[row][col] == cells[row][col + 1])
+      then
+        return true
+      end
+      if (row < rows) and (cells[row][col] == cells[row + 1][col])
       then
         return true
       end
@@ -223,22 +224,15 @@ function game_can_merge()
   return false
 end
 
--- true when no moves left
-function game_is_over()
-  return not (0 < Game.empty_count or game_can_merge())
-end
-
 -- run one move in a given direction
 function game_handle_move(dir)
   move_func = MoveTable[dir]
-  if not move_func then
-    return
-  end
   if move_func() then
     game_add_random_tile()
-    if game_is_over() then
-      Game.state = "gameover"
+    if (0 < Game.empty_count) or game_can_merge() then
+      return
     end
+    Game.state = "gameover"
   end
 end
 
