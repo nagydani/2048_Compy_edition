@@ -67,9 +67,6 @@ end
 
 -- add one random 2 or 4
 function game_add_random_tile()
-  if Game.empty_count == 0 then
-    return
-  end
   target = love.math.random(Game.empty_count)
   row, col = find_empty_by_index(target)
   if row then
@@ -94,13 +91,16 @@ function compact_line(get_value, set_value, size)
   for index = 1, size do
     local value = get_value(index)
     if value ~= nil then
-      if index ~= write then moved = true end
-      set_value(write, value); 
+      if index ~= write then
+        moved = true
+      end
+      set_value(write, value)
       write = write + 1
     end
   end
-  for index = write, size do 
-    set_value(index, nil) end
+  for index = write, size do
+    set_value(index, nil)
+  end
   return moved
 end
 
@@ -123,10 +123,12 @@ end
 -- full move on abstract line via accessors
 function line_move(get_value, set_value, size)
   local moved = compact_line(get_value, set_value, size)
-  if merge_line(get_value, set_value, size) 
-  then moved = true end
-  if compact_line(get_value, set_value, size) 
-  then moved = true end
+  if merge_line(get_value, set_value, size) then
+    moved = true
+  end
+  if compact_line(get_value, set_value, size) then
+    moved = true
+  end
   return moved
 end
 
@@ -209,20 +211,16 @@ function MoveTable.down()
   return move_board(line_apply_col_down, Game.cols)
 end
 
--- check for empty cell
-function game_has_empty()
-  return Game.empty_count > 0
-end
-
 -- true if at least one merge is possible
 function game_can_merge()
+  local cells = Game.cells
   for row = 1, Game.rows do
     for col = 1, Game.cols do
-      if Game.cells[row][col] and 
-         ((col < Game.cols and 
-         Game.cells[row][col] == Game.cells[row][col + 1])
-          or (row < Game.rows and 
-          Game.cells[row][col] == Game.cells[row + 1][col])) then
+      if cells[row][col] and ((col < Game.cols
+           and cells[row][col] == cells[row][col + 1]) or (row
+           < Game.rows
+           and cells[row][col] == cells[row + 1][col]))
+      then
         return true
       end
     end
@@ -232,7 +230,7 @@ end
 
 -- true when no moves left
 function game_is_over()
-  return not (game_has_empty() or game_can_merge())
+  return not (0 < Game.empty_count or game_can_merge())
 end
 
 -- run one move in a given direction
