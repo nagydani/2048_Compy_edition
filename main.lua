@@ -84,34 +84,45 @@ function game_reset()
   Game.state = "play"
 end
 
+-- read and modify board
+function get_value(indices, index)
+  local row, col = indices(index)
+  return Game.cells[row][col]
+end
+function set_value(indices, index, value)
+  local row, col = indices(index)
+  Game.cells[row][col] = value
+end  
+
 -- compact line in-place via accessors
-function compact_line(get_value, set_value, size)
+function compact_line(indices, size)
   local moved = false
   local write = 1
   for index = 1, size do
-    local value = get_value(index)
-    if value ~= nil then
+    local value = get_value(indices, index)
+    if value then
       if index ~= write then
         moved = true
       end
-      set_value(write, value)
+      set_value(indices, write, value)
       write = write + 1
     end
   end
   for index = write, size do
-    set_value(index, nil)
+    set_value(indices, index, nil)
   end
   return moved
 end
 
 -- merge equal neighbours in-place, update score/empty_count
-function merge_line(get_value, set_value, size)
+function merge_line(indices, size)
   local moved = false
   for index = 1, size - 1 do
-    local value = get_value(index)
-    if value ~= nil and get_value(index + 1) == value then
+    local value = get_value(indices, index)
+    if value and get_value(indices, index + 1) == value then
       local merged = value + value
-      set_value(index, merged); set_value(index + 1, nil)
+      set_value(indices, index, merged)
+      set_value(indices, index + 1, nil)
       Game.score = Game.score + merged
       Game.empty_count = Game.empty_count + 1
       moved = true
@@ -121,12 +132,12 @@ function merge_line(get_value, set_value, size)
 end
 
 -- full move on abstract line via accessors
-function line_move(get_value, set_value, size)
-  local moved = compact_line(get_value, set_value, size)
-  if merge_line(get_value, set_value, size) then
+function line_move(indices, size)
+  local moved = compact_line(indices, size)
+  if merge_line(indices, size) then
     moved = true
   end
-  if compact_line(get_value, set_value, size) then
+  if compact_line(indices, size) then
     moved = true
   end
   return moved
@@ -134,50 +145,34 @@ end
 
 -- apply left move to one row
 function line_apply_row_left(row)
-  local function get_value(index)
-    return Game.cells[row][index]
+  local function indices(index)
+    return row, index
   end
-  local function set_value(index, value)
-    Game.cells[row][index] = value
-  end
-  return line_move(get_value, set_value, Game.cols)
+  return line_move(indices, Game.cols)
 end
 
 -- apply right move to one row
 function line_apply_row_right(row)
-  local function get_value(index)
-    local col = Game.cols - index + 1
-    return Game.cells[row][col]
+  local function indices(index)
+    return row, Game.cols - index + 1
   end
-  local function set_value(index, value)
-    local col = Game.cols - index + 1
-    Game.cells[row][col] = value
-  end
-  return line_move(get_value, set_value, Game.cols)
+  return line_move(indices, Game.cols)
 end
 
 -- apply up move to one column
 function line_apply_col_up(col)
-  local function get_value(index)
-    return Game.cells[index][col]
+  local function indices(index)
+    return index, col
   end
-  local function set_value(index, value)
-    Game.cells[index][col] = value
-  end
-  return line_move(get_value, set_value, Game.rows)
+  return line_move(indices, Game.rows)
 end
 
 -- apply down move to one column
 function line_apply_col_down(col)
-  local function get_value(index)
-    local row = Game.rows - index + 1
-    return Game.cells[row][col]
+  local function indices(index)
+    return Game.rows - index + 1, col
   end
-  local function set_value(index, value)
-    local row = Game.rows - index + 1
-    Game.cells[row][col] = value
-  end
-  return line_move(get_value, set_value, Game.rows)
+  return line_move(indices, Game.rows)
 end
 
 -- move the whole board
