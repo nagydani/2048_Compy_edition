@@ -8,6 +8,11 @@ COLOR_EMPTY = Color[Color.white]
 COLOR_TILE_BG = Color[Color.yellow]
 COLOR_TILE_FG = Color[Color.black]
 
+-- current Compy “sans-like” font name
+Font = {
+  sans = "assets/fonts/SarasaGothicJ-Bold.ttf"
+}
+
 -- size from single base unit
 BASE_SIZE = 40
 GRID_SIZE = 4
@@ -24,7 +29,7 @@ HUD_Y = BOARD_TOP + BOARD_HEIGHT + BASE_SIZE
 Game = {
   rows = GRID_SIZE,
   cols = GRID_SIZE,
-  cells = {},
+  cells = { },
   score = 0,
   empty_count = 0
 }
@@ -273,7 +278,7 @@ end
 
 -- draw score text
 function draw_score()
-  gfx.setColor(COLOR_FG[1], COLOR_FG[2], COLOR_FG[3])
+  gfx.setColor(COLOR_FG)
   gfx.print("Score: " .. Game.score, BOARD_LEFT, HUD_Y)
 end
 
@@ -311,7 +316,7 @@ end
 
 -- main draw
 function love.draw()
-  gfx.clear(COLOR_BG[1], COLOR_BG[2], COLOR_BG[3])
+  gfx.clear(COLOR_BG)
   draw_board_frame()
   draw_board()
   draw_score()
