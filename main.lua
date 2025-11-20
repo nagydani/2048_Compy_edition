@@ -272,7 +272,7 @@ end
 
 -- draw score text
 function draw_score()
-  gfx.setColor(COLOR_FG[1], COLOR_FG[2], COLOR_FG[3])
+  gfx.setColor(COLOR_FG)
   gfx.print("Score: " .. Game.score, BOARD_LEFT, HUD_Y)
 end
 
