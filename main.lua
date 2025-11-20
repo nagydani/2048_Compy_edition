@@ -1,6 +1,6 @@
 -- main.lua
 
--- colors (Compy palette)
+-- colors
 COLOR_BG = Color[Color.black]
 COLOR_FG = Color[Color.white + Color.bright]
 COLOR_FRAME = Color[Color.cyan]
