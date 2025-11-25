@@ -15,7 +15,8 @@ end
 
 function love.draw()
   gfx.clear(COLOR_BG)
-  draw_board_frame()
+  draw_outer_frame()
+  draw_inner_frame()
   draw_board()
   draw_score()
   draw_game_over()

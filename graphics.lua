@@ -23,7 +23,7 @@ FRAME_CORNER_OUT_RATIO = 0.4
 FRAME_CORNER_IN_RATIO = 0.3
 
 -- layout constants
-GAME_OVER_OFFSET_Y = 30
+GAME_OVER_OFFSET_X = 20
 
 -- colors
 COLOR_BG = {
@@ -57,63 +57,27 @@ COLOR_TILE_FG_LIGHT = {
 COLOR_FG = COLOR_TILE_FG_DARK
 
 -- tile background colors
-TILE_BG = {
-  [2] = {
-    0.933,
-    0.894,
-    0.855
-  },
-  [4] = {
-    0.929,
-    0.878,
-    0.784
-  },
-  [8] = {
-    0.949,
-    0.694,
-    0.475
-  },
-  [16] = {
-    0.961,
-    0.584,
-    0.388
-  },
-  [32] = {
-    0.965,
-    0.486,
-    0.373
-  },
-  [64] = {
-    0.965,
-    0.369,
-    0.231
-  },
-  [128] = {
-    0.929,
-    0.812,
-    0.447
-  },
-  [256] = {
-    0.929,
-    0.8,
-    0.38
-  },
-  [512] = {
-    0.929,
-    0.784,
-    0.314
-  },
-  [1024] = {
-    0.929,
-    0.773,
-    0.247
-  },
-  [2048] = {
-    0.929,
-    0.761,
-    0.18
+TILE_BG = { }
+
+function add_tile_bg(value, r, g, b)
+  TILE_BG[value] = {
+    r,
+    g,
+    b
   }
-}
+end
+
+add_tile_bg(2, 0.933, 0.894, 0.855)
+add_tile_bg(4, 0.929, 0.878, 0.784)
+add_tile_bg(8, 0.949, 0.694, 0.475)
+add_tile_bg(16, 0.961, 0.584, 0.388)
+add_tile_bg(32, 0.965, 0.486, 0.373)
+add_tile_bg(64, 0.965, 0.369, 0.231)
+add_tile_bg(128, 0.929, 0.812, 0.447)
+add_tile_bg(256, 0.929, 0.8, 0.38)
+add_tile_bg(512, 0.929, 0.784, 0.314)
+add_tile_bg(1024, 0.929, 0.773, 0.247)
+add_tile_bg(2048, 0.929, 0.761, 0.18)
 
 -- super tiles > 2048:
 COLOR_TILE_BG_SUPER = {
@@ -143,8 +107,7 @@ function draw_round_rect(x, y, w, h, radius)
   gfx.arc("fill", x + radius, y2 - radius, radius, 0, two_pi)
 end
 
--- draw board frame with uniform thickness
-function draw_board_frame()
+function draw_outer_frame()
   gfx.setColor(COLOR_FRAME)
   draw_round_rect(
     BOARD_LEFT - FRAME_THICK,
@@ -153,6 +116,9 @@ function draw_board_frame()
     BOARD_HEIGHT + FRAME_THICK * 2,
     FRAME_THICK * FRAME_CORNER_OUT_RATIO
   )
+end
+
+function draw_inner_frame()
   gfx.setColor(COLOR_BOARD)
   draw_round_rect(
     BOARD_LEFT,
@@ -223,8 +189,10 @@ function draw_game_over()
     gfx.setFont(hudFont)
     gfx.print(
       "GAME OVER",
-      BOARD_LEFT,
-      HUD_Y + GAME_OVER_OFFSET_Y
+      BOARD_LEFT
+        + hudFont:getWidth("Score: " .. Game.score)
+        + GAME_OVER_OFFSET_X,
+      HUD_Y
     )
   end
 end
