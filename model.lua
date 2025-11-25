@@ -86,3 +86,4 @@ function game_can_merge()
   end
   return false
 end
+
