@@ -6,10 +6,10 @@ require("model")
 gfx = love.graphics
 
 -- size from single base unit
-BASE_SIZE = 56
+BASE_SIZE = 15
 FRAME_THICK = BASE_SIZE
-CELL_SIZE = BASE_SIZE * 2
-CELL_GAP = math.floor(BASE_SIZE / 5 + 0.5)
+CELL_SIZE = BASE_SIZE * 9
+CELL_GAP = BASE_SIZE
 CELL_OFFSET = math.floor(CELL_GAP / 2 + 0.5)
 BOARD_LEFT = FRAME_THICK
 BOARD_TOP = FRAME_THICK
@@ -17,30 +17,27 @@ BOARD_WIDTH = GRID_SIZE * CELL_SIZE
 BOARD_HEIGHT = GRID_SIZE * CELL_SIZE
 HUD_Y = BOARD_TOP + BOARD_HEIGHT + BASE_SIZE
 TILE_SIZE = CELL_SIZE - CELL_GAP
-TILE_CORNER_RATIO = 0.22
-TILE_RADIUS = math.floor(TILE_SIZE * TILE_CORNER_RATIO + 0.5)
-FRAME_CORNER_OUT_RATIO = 0.4
-FRAME_CORNER_IN_RATIO = 0.3
+TILE_RADIUS = CELL_GAP
+FRAME_RADIUS = TILE_RADIUS + FRAME_THICK
 
 -- layout constants
-GAME_OVER_OFFSET_X = 20
+GAME_OVER_OFFSET_Y = 30
 
 -- colors
 COLOR_BG = {
-  0,
-  0,
-  0
+  0.98,
+  0.973,
+  0.941
 }
 COLOR_BOARD = {
-  0.733,
-  0.678,
-  0.627
+  0.612,
+  0.545,
+  0.486
 }
-COLOR_FRAME = COLOR_BOARD
 COLOR_EMPTY = {
-  0.804,
-  0.757,
-  0.706
+  0.741,
+  0.675,
+  0.592
 }
 
 -- text colors
@@ -58,7 +55,6 @@ COLOR_FG = COLOR_TILE_FG_DARK
 
 -- tile background colors
 TILE_BG = { }
-
 function add_tile_bg(value, r, g, b)
   TILE_BG[value] = {
     r,
@@ -66,7 +62,6 @@ function add_tile_bg(value, r, g, b)
     b
   }
 end
-
 add_tile_bg(2, 0.933, 0.894, 0.855)
 add_tile_bg(4, 0.929, 0.878, 0.784)
 add_tile_bg(8, 0.949, 0.694, 0.475)
@@ -94,38 +89,31 @@ tileFont = gfx.newFont(TILE_FONT_PATH, TILE_FONT_SIZE)
 hudFont  = gfx.newFont(TILE_FONT_PATH, HUD_FONT_SIZE)
 
 -- rounded-corner squares
+D09 = math.pi / 2
+D18 = math.pi
+D27 = D09 * 3
+D36 = D18 * 2
 function draw_round_rect(x, y, w, h, radius)
-  local two_pi = 2 * math.pi
   local x2 = x + w
   local y2 = y + h
   local d = radius * 2
   gfx.rectangle("fill", x + radius, y, w - d, h)
   gfx.rectangle("fill", x, y + radius, w, h - d)
-  gfx.arc("fill", x + radius, y + radius, radius, 0, two_pi)
-  gfx.arc("fill", x2 - radius, y + radius, radius, 0, two_pi)
-  gfx.arc("fill", x2 - radius, y2 - radius, radius, 0, two_pi)
-  gfx.arc("fill", x + radius, y2 - radius, radius, 0, two_pi)
+  gfx.arc("fill", x + radius, y + radius, radius, D18, D27)
+  gfx.arc("fill", x2 - radius, y + radius, radius, D27, D36)
+  gfx.arc("fill", x2 - radius, y2 - radius, radius, 0, D09)
+  gfx.arc("fill", x + radius, y2 - radius, radius, D09, D18)
 end
 
-function draw_outer_frame()
-  gfx.setColor(COLOR_FRAME)
-  draw_round_rect(
-    BOARD_LEFT - FRAME_THICK,
-    BOARD_TOP - FRAME_THICK,
-    BOARD_WIDTH + FRAME_THICK * 2,
-    BOARD_HEIGHT + FRAME_THICK * 2,
-    FRAME_THICK * FRAME_CORNER_OUT_RATIO
-  )
-end
-
-function draw_inner_frame()
+-- draw board frame with uniform thickness
+function draw_board_frame()
   gfx.setColor(COLOR_BOARD)
   draw_round_rect(
-    BOARD_LEFT,
-    BOARD_TOP,
-    BOARD_WIDTH,
-    BOARD_HEIGHT,
-    FRAME_THICK * FRAME_CORNER_IN_RATIO
+    BOARD_LEFT - CELL_OFFSET,
+    BOARD_TOP - CELL_OFFSET,
+    BOARD_WIDTH + 2 * CELL_OFFSET,
+    BOARD_HEIGHT + 2 * CELL_OFFSET,
+    FRAME_RADIUS
   )
 end
 
@@ -189,10 +177,8 @@ function draw_game_over()
     gfx.setFont(hudFont)
     gfx.print(
       "GAME OVER",
-      BOARD_LEFT
-        + hudFont:getWidth("Score: " .. Game.score)
-        + GAME_OVER_OFFSET_X,
-      HUD_Y
+      BOARD_LEFT,
+      HUD_Y + GAME_OVER_OFFSET_Y
     )
   end
 end
