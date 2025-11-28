@@ -23,6 +23,9 @@ FRAME_RADIUS = TILE_RADIUS + FRAME_THICK
 -- layout constants
 GAME_OVER_OFFSET_X = 20
 SPAWN_MIN_SCALE = 0.2
+MERGE_MAX_SCALE = 1.2
+MERGE_SPLIT = 0.5
+MERGE_SHRINK = 0.3
 
 -- colors
 COLOR_BG = {
@@ -218,6 +221,40 @@ function DrawAnim.slide(anim)
   local y = y1 + (y2 - y1) * t
   gfx.setColor(COLOR_CANVAS_TINT)
   gfx.draw(TILE_CANVAS[anim.value], x, y)
+end
+
+local function draw_merge_old(anim, phase)
+  local x, y = cell_to_screen(anim.row, anim.col)
+  gfx.setColor(COLOR_CANVAS_TINT)
+  gfx.push()
+  gfx.translate(x + TILE_SIZE / 2, y + TILE_SIZE / 2)
+  local s = 1 - MERGE_SHRINK * phase
+  gfx.scale(s, s)
+  gfx.draw(TILE_CANVAS[anim.value / 2], -TILE_SIZE / 2, -TILE_SIZE / 2)
+  gfx.pop()
+end
+
+local function draw_merge_new(anim, phase)
+  local x, y = cell_to_screen(anim.row, anim.col)
+  gfx.setColor(COLOR_CANVAS_TINT)
+  gfx.push()
+  gfx.translate(x + TILE_SIZE / 2, y + TILE_SIZE / 2)
+  local s = MERGE_MAX_SCALE - (MERGE_MAX_SCALE - 1) * phase
+  gfx.scale(s, s)
+  gfx.draw(TILE_CANVAS[anim.value], -TILE_SIZE / 2, -TILE_SIZE / 2)
+  gfx.pop()
+end
+
+function DrawAnim.merge(anim)
+  local t = anim.t
+  if t < 0 then t = 0 end
+  if t > 1 then t = 1 end
+  local split = MERGE_SPLIT
+  if t < split then
+    draw_merge_old(anim, t / split)
+  else
+    draw_merge_new(anim, (t - split) / (1 - split))
+  end
 end
 
 function draw_animations()

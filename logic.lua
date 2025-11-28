@@ -54,6 +54,8 @@ function merge_line(indices, size)
       set_value(indices, index + 1, nil)
       Game.score = Game.score + merged
       Game.empty_count = Game.empty_count + 1
+      local row, col = indices(index)
+      game_add_spawn_merge("merge", row, col, merged)
       moved = true
     end
   end

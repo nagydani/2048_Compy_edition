@@ -52,28 +52,34 @@ function find_empty_by_index(target)
   end
 end
 
-function game_add_spawn_animation(row, col, value)
-  local anim = {
-    type = "spawn",
-    row = row,
-    col = col,
-    value = value,
-    t = 0
-  }
+function game_add_animation(anim)
+  anim.t = 0
   table.insert(Game.animations, anim)
 end
 
+local function add_basic_anim(type_, row, col, value)
+  game_add_animation({
+    type = type_,
+    row = row,
+    col = col,
+    value = value
+  })
+end
+
+function game_add_spawn_merge(type_, row, col, value)
+  add_basic_anim(type_, row, col, value)
+end
+
 function game_add_slide_animation(from_row, from_col, to_row, to_col, value)
-  local anim = {
+  game_add_animation({
     type = "slide",
     from_row = from_row,
     from_col = from_col,
     to_row = to_row,
     to_col = to_col,
-    value = value,
-    t = 0
+    value = value
   }
-  table.insert(Game.animations, anim)
+)
 end
 
 function game_add_random_tile()
@@ -82,7 +88,7 @@ function game_add_random_tile()
   local value = tile_random_value()
   Game.cells[row][col] = value
   Game.empty_count = Game.empty_count - 1
-  game_add_spawn_animation(row, col, value)
+  game_add_spawn_merge("spawn", row, col, value)
 end
 
 -- full reset of the game
