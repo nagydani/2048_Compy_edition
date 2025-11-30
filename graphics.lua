@@ -17,6 +17,7 @@ BOARD_WIDTH = GRID_SIZE * CELL_SIZE
 BOARD_HEIGHT = GRID_SIZE * CELL_SIZE
 HUD_Y = BOARD_TOP + BOARD_HEIGHT + BASE_SIZE
 TILE_SIZE = CELL_SIZE - CELL_GAP
+HALF_TILE_SIZE = TILE_SIZE / 2
 TILE_RADIUS = CELL_GAP
 FRAME_RADIUS = TILE_RADIUS + FRAME_THICK
 
@@ -185,7 +186,7 @@ function draw_cell(row, col, value, mask)
   if not value then
     return
   end
-  if mask and mask[row] and mask[row][col] then
+  if mask and mask[row][col] then
     return
   end
   gfx.setColor(COLOR_CANVAS_TINT)
@@ -210,9 +211,9 @@ function DrawAnim.spawn(anim)
   local s = SPAWN_MIN_SCALE + (1 - SPAWN_MIN_SCALE) * t
   gfx.setColor(COLOR_CANVAS_TINT)
   gfx.push()
-  gfx.translate(x + TILE_SIZE / 2, y + TILE_SIZE / 2)
+  gfx.translate(x + HALF_TILE_SIZE, y + HALF_TILE_SIZE)
   gfx.scale(s, s)
-  gfx.draw(TILE_CANVAS[anim.value], -TILE_SIZE / 2, -TILE_SIZE / 2)
+  gfx.draw(TILE_CANVAS[anim.value], -HALF_TILE_SIZE, -HALF_TILE_SIZE)
   gfx.pop()
 end
 
@@ -232,9 +233,9 @@ function DrawAnim.merge(anim)
   local canvas, scale = merge_state(anim, t)
   gfx.setColor(COLOR_CANVAS_TINT)
   gfx.push()
-  gfx.translate(x + TILE_SIZE / 2, y + TILE_SIZE / 2)
+  gfx.translate(x + HALF_TILE_SIZE, y + HALF_TILE_SIZE)
   gfx.scale(scale, scale)
-  gfx.draw(canvas, -TILE_SIZE / 2, -TILE_SIZE / 2)
+  gfx.draw(canvas, -HALF_TILE_SIZE, -HALF_TILE_SIZE)
   gfx.pop()
 end
 
@@ -250,12 +251,8 @@ function merge_state(anim, t)
 end
 
 function draw_animations()
-  for index = 1, #Game.animations do
-    local anim = Game.animations[index]
-    local handler = DrawAnim[anim.type]
-    if handler then
-      handler(anim)
-    end
+  for i = 1, #Game.animations do
+    DrawAnim[Game.animations[i].type](Game.animations[i])
   end
 end
 
@@ -264,12 +261,10 @@ function build_anim_mask()
   for row = 1, Game.rows do
     mask[row] = { }
   end
-  for index = 1, #Game.animations do
-    local anim = Game.animations[index]
-    local row1 = anim.row or anim.row_to
-    local col1 = anim.col or anim.col_to
-    if row1 and col1 then
-      mask[row1][col1] = true
+  for i = 1, #Game.animations do
+    local anim = Game.animations[i]
+    if anim.row and anim.col then
+      mask[anim.row][anim.col] = true
     end
     if anim.row_from and anim.col_from then
       mask[anim.row_from][anim.col_from] = true

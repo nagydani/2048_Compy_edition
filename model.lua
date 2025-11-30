@@ -54,42 +54,19 @@ function find_empty_by_index(target)
   end
 end
 
-function game_add_spawn_animation(row, col, value)
-  local anim = {
-    type = "spawn",
-    row = row,
-    col = col,
-    value = value,
-    t = 0,
-    duration = SPAWN_ANIM_DURATION
-  }
-  table.insert(Game.animations, anim)
-end
+local ANIM_DURATION = {
+  spawn = SPAWN_ANIM_DURATION,
+  slide = SLIDE_ANIM_DURATION,
+  merge = MERGE_ANIM_DURATION
+}
 
-function game_add_slide_animation(row_from, col_from, row_to, col_to, value)
-  local anim = {
-    type = "slide",
-    row_from = row_from,
-    col_from = col_from,
-    row_to = row_to,
-    col_to = col_to,
-    value = value,
-    t = 0,
-    duration = SLIDE_ANIM_DURATION
-  }
-  table.insert(Game.animations, anim)
-end
-
-function game_add_merge_animation(row, col, from_value, to_value)
-  local anim = {
-    type = "merge",
-    row = row,
-    col = col,
-    from_value = from_value,
-    to_value = to_value,
-    t = 0,
-    duration = MERGE_ANIM_DURATION
-  }
+function game_add_animation(kind, args)
+  assert(kind, "Animation kind is required")
+  local anim = args or { }
+  anim.type = kind
+  anim.t = 0
+  anim.duration = anim.duration or ANIM_DURATION[kind]
+  assert(anim.duration, "Unknown animation kind: " .. tostring(kind))
   table.insert(Game.animations, anim)
 end
 
@@ -99,7 +76,11 @@ function game_add_random_tile()
   local value = tile_random_value()
   Game.cells[row][col] = value
   Game.empty_count = Game.empty_count - 1
-  game_add_spawn_animation(row, col, value)
+  game_add_animation("spawn", {
+    row = row,
+    col = col,
+    value = value
+  })
 end
 
 -- full reset of the game
@@ -116,9 +97,10 @@ function game_update_animations(dt)
   local index = 1
   while index <= #Game.animations do
     local anim = Game.animations[index]
-    local duration = anim.duration or SPAWN_ANIM_DURATION
+    local duration = anim.duration
+    assert(duration, "Animation missing duration for type " .. tostring(anim.type))
     anim.t = anim.t + dt / duration
-    if 1 < anim.t then
+    if anim.t > 1 then
       table.remove(Game.animations, index)
     else
       index = index + 1

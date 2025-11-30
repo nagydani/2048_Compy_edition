@@ -51,11 +51,17 @@ end
 function add_anim(kind, idx, a, b, value)
   local r1, c1 = idx(a)
   local r2, c2 = idx(b)
+  local args
   if kind == "slide" then
-    game_add_slide_animation(r1, c1, r2, c2, value)
+    args = {row_from = r1, col_from = c1, row_to = r2,
+      col_to = c2, value = value
+    }
   else
-    game_add_merge_animation(r2, c2, value, value + value)
+    args = {row = r2, col = c2, from_value = value,
+      to_value = value + value
+    }
   end
+  game_add_animation(kind, args)
 end
 
 function apply_slide_step(before, after, idx, src, dst, si, di)
