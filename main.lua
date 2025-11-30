@@ -17,6 +17,11 @@ function love.update(dt)
   game_update_animations(dt)
 end
 
+love.mousepressed   = pointer_begin
+love.mousereleased  = pointer_end
+love.touchpressed   = pointer_begin
+love.touchreleased  = pointer_end
+
 function love.draw()
   gfx.clear(COLOR_BG)
   draw_board_frame()
