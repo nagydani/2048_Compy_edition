@@ -17,10 +17,13 @@ function love.update(dt)
   game_update_animations(dt)
 end
 
-love.mousepressed   = pointer_begin
-love.mousereleased  = pointer_end
-love.touchpressed   = pointer_begin
-love.touchreleased  = pointer_end
+function love.mousepressed(x, y, button, istouch, presses)
+  pointer_begin(x, y)
+end
+
+function love.mousereleased(x, y, button, istouch, presses)
+  pointer_end(x, y)
+end
 
 function love.draw()
   gfx.clear(COLOR_BG)

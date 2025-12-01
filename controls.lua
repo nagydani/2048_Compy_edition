@@ -1,6 +1,5 @@
 -- controls.lua
--- Keyboard handlers
--- Mouse control
+-- Keyboard handlers + mouse/touch swipe
 
 require("model")
 require("logic")
@@ -36,56 +35,36 @@ KeyPress.s = KeyPress.down
 KeyPress.escape = love.event.quit
 KeyPress.r = game_reset
 
-SwipeDir = {
-  left = KeyPress.left,
-  right = KeyPress.right,
-  up = KeyPress.up,
-  down = KeyPress.down
-}
 
-SwipeMap = {
-  ["x+"] = "right",
-  ["x-"] = "left",
-  ["y+"] = "down",
-  ["y-"] = "up"
-}
-
-local function pointer_xy(a, b, c)
-  if type(a) == "number" and type(b) == "number" 
-  then
-    return a, b      
-  end
-  return b, c        
-end
-
-function pointer_begin(a, b, c)
-  local x, y = pointer_xy(a, b, c)
+function pointer_begin(x, y)
   POINTER_ACTIVE = true
   POINTER_X = x
   POINTER_Y = y
 end
 
 function swipe_direction(dx, dy)
-  local absx = math.abs(dx)
-  local absy = math.abs(dy)
-  if absx * absx + absy * absy < SWIPE_MIN_DISTANCE2 then
+  local absx  = math.abs(dx)
+  local absy  = math.abs(dy)
+  if absx*absx + absy*absy < SWIPE_MIN_DISTANCE2 then
     return nil
   end
   if absx >= absy * SWIPE_DIR_RATIO then
-    return dx > 0 and "x+" or "x-"
+    return dx > 0 and "right" or "left"
   end
   if absy >= absx * SWIPE_DIR_RATIO then
-    return dy > 0 and "y+" or "y-"
+    return dy > 0 and "down" or "up"
   end
+ return nil
 end
 
-function pointer_end(a, b, c)
-  local x, y = pointer_xy(a, b, c)
-  if not POINTER_ACTIVE then return end
+function pointer_end(x, y)
+  if not POINTER_ACTIVE then
+    return
+  end
   POINTER_ACTIVE = false
-
   local dir = swipe_direction(x - POINTER_X, y - POINTER_Y)
-  if not dir then return end
-
-  SwipeDir[ SwipeMap[dir] ]()
+  if not dir then
+    return
+  end
+  love.keypressed(dir)
 end
