@@ -8,6 +8,7 @@ KeyPress = { }
 
 SWIPE_MIN_DISTANCE2 = 40 * 40
 SWIPE_DIR_RATIO = 1.5
+SWIPE_DIR_RATIO2 = SWIPE_DIR_RATIO * SWIPE_DIR_RATIO
 POINTER_ACTIVE = false
 POINTER_X = 0
 POINTER_Y = 0
@@ -43,15 +44,15 @@ function pointer_begin(x, y)
 end
 
 function swipe_direction(dx, dy)
-  local absx  = math.abs(dx)
-  local absy  = math.abs(dy)
-  if absx*absx + absy*absy < SWIPE_MIN_DISTANCE2 then
+  local dx2 = dx * dx
+  local dy2 = dy * dy
+  if dx2 + dy2 < SWIPE_MIN_DISTANCE2 then
     return nil
   end
-  if absx >= absy * SWIPE_DIR_RATIO then
+  if dx2 >= dy2 * SWIPE_DIR_RATIO2 then
     return dx > 0 and "right" or "left"
   end
-  if absy >= absx * SWIPE_DIR_RATIO then
+  if dy2 >= dx2 * SWIPE_DIR_RATIO2 then
     return dy > 0 and "down" or "up"
   end
  return nil
