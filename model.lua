@@ -18,9 +18,11 @@ Game = {
 -- probabilities and counts
 START_TILES = 2
 TILE_TWO_PROBABILITY = 0.9
-SPAWN_ANIM_DURATION = 0.15
-SLIDE_ANIM_DURATION = 0.12
-MERGE_ANIM_DURATION = 0.12
+ANIM_DURATION = {
+  spawn = 0.15,
+  slide = 0.12,
+  merge = 0.12
+}
 
 -- reset board to empty state
 function game_clear()
@@ -53,12 +55,6 @@ function find_empty_by_index(target)
     end
   end
 end
-
-local ANIM_DURATION = {
-  spawn = SPAWN_ANIM_DURATION,
-  slide = SLIDE_ANIM_DURATION,
-  merge = MERGE_ANIM_DURATION
-}
 
 function game_add_animation(kind, args)
   local anim = args or { }
